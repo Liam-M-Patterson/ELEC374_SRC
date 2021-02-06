@@ -14,7 +14,7 @@ architecture behaviour of reg32 is
 begin
 reg32 : process(clock, clear)
 begin
-	if(clear = '0') then
+	if(clear = '1') then
 		q <= (others => '0');
 	elsif (clock'event and clock = '1')	then
 		if(enable = '1') then
