@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_signed.all;
 library work;
 
 entity ALU is
@@ -33,10 +34,17 @@ component rca32_add is
 		);
 end component rca32_add;
 
+component neg is
+	port(
+		A : in std_logic_vector(31 downto 0);
+		output : out std_logic_vector(31 downto 0)
+	);
+end component;
+
 -- define internal signals
 signal add_result : std_logic_vector(31 downto 0);
-
-
+signal sub_result : std_logic_vector(31 downto 0);
+signal neg_result : std_logic_vector(31 downto 0);
 -- map components
 begin
 ALU_add : rca32_add
@@ -46,10 +54,15 @@ ALU_add : rca32_add
 		result => add_result
 	);
 
+negate : neg
+	port map(
+		A => Ain,
+		output => neg_result
+	);
 
 
 ALU: process(Ain, Bin, andS, orS, notS, addS, subS, shrS, shraS, shlS, shcS, negS, 
-				 add_result) is
+				 add_result, sub_result, neg_result) is
 begin
 	if (andS = '1') then 
 		Cout(63 downto 32) <= (others => '0');
@@ -66,6 +79,14 @@ begin
 	elsif(addS = '1') then
 		Cout(63 downto 32) <= (others => '0');
 		Cout(31 downto 0) <= add_result;
+		
+	elsif(subS = '1') then
+		Cout(63 downto 32) <= (others => '0');
+		Cout(31 downto 0) <= sub_result;
+		
+	elsif(negS = '1') then
+		Cout(63 downto 32) <= (others => '1');
+		Cout(31 downto 0) <= neg_result;
 		
 	else
 		Cout <= (others => '0');

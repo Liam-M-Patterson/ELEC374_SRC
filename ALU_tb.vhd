@@ -67,23 +67,32 @@ UUT : ALU port map(
 
 		simulate_proccessor: process
 		begin
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0';
-			Ain <= "01111111111111111111111111111111"; -- 11
-			Bin <= "01111111111111111111111111111111"; -- 73
-			
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			--Ain <= "01111111111111111111111111111111"; -- 11
+			--Bin <= "11111111111110000000000111111111"; -- 73
+			Ain <= "00000000000000000000000000001011";
+			Bin <= "00000000000000000000000001001001";
 			wait for 1 ns;
 			
 			andS <= '1';
 			wait for 5 ns;
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
 			orS <= '1';
 			wait for 5 ns;
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
 			notS <= '1';
 			wait for 5 ns;
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
 			addS <= '1';
+			--wait for 5 ns;
+			--andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			--subS <= '0';
 			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			negS <= '1';
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			
 		end process;
 		
 end architecture;
