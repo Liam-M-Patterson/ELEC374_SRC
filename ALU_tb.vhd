@@ -84,9 +84,9 @@ UUT : ALU port map(
 			wait for 5 ns;
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
 			addS <= '1';
-			--wait for 5 ns;
-			--andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
-			--subS <= '0';
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			subS <= '1';
 			wait for 5 ns;
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
 			negS <= '1';

@@ -14,9 +14,6 @@ end entity;
 
 
 architecture behaviour of neg is
-
--- define components needed for negate
-
 --define signal
 signal result : std_logic_vector(31 downto 0);
 
@@ -31,7 +28,7 @@ begin
 		end if;
 	end loop;
 	
-	output <= result + "00000000000000000000000000000001";
+	output <= result + '1'; --"00000000000000000000000000000001";
 
 end process;
 end architecture;

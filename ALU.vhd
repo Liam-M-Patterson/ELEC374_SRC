@@ -41,13 +41,21 @@ component neg is
 	);
 end component;
 
+component sub is
+port(
+		A : in std_logic_vector(31 downto 0);
+		B : in std_logic_vector(31 downto 0);
+		output : out std_logic_vector(63 downto 0)
+	);
+end component;
+
 -- define internal signals
 signal add_result : std_logic_vector(31 downto 0);
-signal sub_result : std_logic_vector(31 downto 0);
+signal sub_result : std_logic_vector(63 downto 0);
 signal neg_result : std_logic_vector(31 downto 0);
 -- map components
 begin
-ALU_add : rca32_add
+addition : rca32_add
 	port map(
 		A => Ain,
 		B => Bin,
@@ -60,6 +68,12 @@ negate : neg
 		output => neg_result
 	);
 
+subtract : sub 
+	port map(
+		A => Ain, 
+		B => Bin, 
+		output => sub_result
+	);
 
 ALU: process(Ain, Bin, andS, orS, notS, addS, subS, shrS, shraS, shlS, shcS, negS, 
 				 add_result, sub_result, neg_result) is
@@ -81,9 +95,9 @@ begin
 		Cout(31 downto 0) <= add_result;
 		
 	elsif(subS = '1') then
-		Cout(63 downto 32) <= (others => '0');
-		Cout(31 downto 0) <= sub_result;
-		
+		--Cout(63 downto 32) <= (others => '0');
+		--Cout(31 downto 0) <= sub_result;
+		Cout <= sub_result;
 	elsif(negS = '1') then
 		Cout(63 downto 32) <= (others => '1');
 		Cout(31 downto 0) <= neg_result;
