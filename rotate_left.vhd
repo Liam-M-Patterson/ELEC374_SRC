@@ -14,7 +14,7 @@ begin
 	variable tmp: std_logic;
 	begin
 		tmp:= input(31);
-		output(31 downto 1)<= input(30 downto 1);
+		output(31 downto 1)<= input(30 downto 0);
 		output(0)<=tmp;
 	end process;
 end architecture behavioural;

@@ -10,9 +10,6 @@ end entity shift_right;
 
 architecture behavioural of shift_right is
 begin
-	process
-	begin
 		output(30 downto 0)<= input(31 downto 1);
 		output(31)<= '0';
-	end process;
 end architecture behavioural;

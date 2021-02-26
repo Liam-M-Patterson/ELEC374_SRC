@@ -16,11 +16,12 @@ architecture behaviour of ALU_tb is
 	signal addS : std_logic;
 	signal subS : std_logic;
 	signal shrS : std_logic;
-	signal shraS : std_logic;
+	signal rorS : std_logic;
 	signal shlS : std_logic;
-	signal shcS : std_logic;
+	signal rolS : std_logic;
 	signal negS : std_logic;
-	
+	signal multS : std_logic;
+	signal divS : std_logic;
 	signal Cout : std_logic_vector(63 downto 0);
 	
 component ALU is
@@ -34,11 +35,12 @@ component ALU is
 		addS : in std_logic;
 		subS : in std_logic;
 		shrS : in std_logic;
-		shraS : in std_logic;
+		rorS : in std_logic;
 		shlS : in std_logic;
-		shcS : in std_logic;
+		rolS : in std_logic;
 		negS : in std_logic;
-		
+		multS : in std_logic;
+		divS : in std_logic;
 		
 
 		Cout : out std_logic_vector(63 downto 0)
@@ -55,11 +57,12 @@ UUT : ALU port map(
 		addS => addS,
 		subS => subS,
 		shrS => shrS,
-		shraS => shraS,
+		rorS => rorS,
 		shlS => shlS,
-		shcS => shcS, 
+		rolS => rolS, 
 		negS => negS,
-		
+		multS => multS,
+		divS => divS,
 		Cout => Cout
 		);
 	
@@ -67,7 +70,7 @@ UUT : ALU port map(
 
 		simulate_proccessor: process
 		begin
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			--Ain <= "01111111111111111111111111111111"; -- 11
 			--Bin <= "11111111111110000000000111111111"; -- 73
 			Ain <= "00000000000000000000000000001011";
@@ -76,22 +79,47 @@ UUT : ALU port map(
 			
 			andS <= '1';
 			wait for 5 ns;
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			orS <= '1';
 			wait for 5 ns;
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			notS <= '1';
 			wait for 5 ns;
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			addS <= '1';
 			wait for 5 ns;
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			subS <= '1';
 			wait for 5 ns;
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			negS <= '1';
+			
 			wait for 5 ns;
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; shraS <= '0'; shlS <= '0'; shcS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0';rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			shrS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			shlS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			rorS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			rolS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			multS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			divS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			
 		end process;
 		

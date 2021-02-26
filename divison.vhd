@@ -22,9 +22,7 @@ begin
 		Q:= dividend;
 		tmp_quotient:= Dividend;
 		fixed_Divisor:= Divisor;
-		shifted(31 downto 1):= Q(30 downto 0);
-		shifted(0):= '0';
-		Q:= shifted;
+
 		
 		for i in 0 to 31 loop
 			shifted(31 downto 1):= A(30 downto 0);
