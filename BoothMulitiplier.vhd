@@ -9,10 +9,13 @@ end entity BoothMultiplier;
 
 architecture behavioral of BoothMultiplier is
 begin 
+
+
 	process(Multiplicand,Multiplier)
 	variable tmp_cand: std_logic_vector(32 downto 0);
 	variable tmp_product: std_logic_vector(63 downto 0);
 	variable tmp_lier: std_logic_vector(63 downto 0);
+	variable shifted: std_logic_vector(63 downto 0);
 	variable fixed_lier: std_logic_vector(63 downto 0);
 	variable tmp_out: std_logic_vector(63 downto 0);
 	variable i: integer;
@@ -27,12 +30,16 @@ begin
 	for i in 0 to 31 loop
 	tmp_lier:= fixed_lier;
 	if((tmp_cand(i+1 downto i)="01")) then
-		tmp_lier:= tmp_lier sll i;
+		shifted(31 downto 1):= tmp_lier(30 downto 0);
+		shifted(0):= '0';
+		tmp_lier:= shifted;
 		tmp_out := tmp_out + tmp_lier;
 	end if;
 	if((tmp_cand(i+1 downto i)="10")) then
-	tmp_lier:= -tmp_lier;
-	tmp_lier := tmp_lier sll i;
+	tmp_lier:= 0 -tmp_lier;
+	shifted(31 downto 1):= tmp_lier(30 downto 0);
+	shifted(0):= '0';
+	tmp_lier:= shifted;
 	tmp_out:= tmp_out+ tmp_lier;
 	end if;
 	end loop;
