@@ -1,6 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_signed.all;
+use ieee.std_logic_arith.all;
+use ieee.numeric_std.all;
 library work;
 
 entity ALU is
@@ -14,10 +16,12 @@ port(
 	addS : in std_logic;
 	subS : in std_logic;
 	shrS : in std_logic;
-	shraS : in std_logic;
+	rorS : in std_logic;
 	shlS : in std_logic;
-	shcS : in std_logic;
+	rolS : in std_logic;
 	negS : in std_logic;
+	multS : in std_logic;
+	divS : in std_logic;
 	
 
 	Cout : out std_logic_vector(63 downto 0)
@@ -49,10 +53,40 @@ port(
 	);
 end component;
 
+component shiftR is
+port(
+		A: in std_logic_vector(31 downto 0);
+		B : in std_logic_vector(31 downto 0);
+		output: out std_logic_vector(31 downto 0)
+		);
+end component;
+
+component shiftL is
+port(A: in std_logic_vector(31 downto 0);
+			B: in std_logic_vector(31 downto 0);
+			output: out std_logic_vector(31 downto 0));
+end component;
+
+component rotateR is
+	port(A: in std_logic_vector(31 downto 0);
+			B: in std_logic_vector(31 downto 0);
+			output: out std_logic_vector(31 downto 0));
+end component;
+
+component rotateL is
+	port(A: in std_logic_vector(31 downto 0);
+			B: in std_logic_vector(31 downto 0);
+			output: out std_logic_vector(31 downto 0));
+end component;
+
 -- define internal signals
 signal add_result : std_logic_vector(31 downto 0);
 signal sub_result : std_logic_vector(63 downto 0);
 signal neg_result : std_logic_vector(31 downto 0);
+signal shr_result : std_logic_vector(31 downto 0);
+signal shl_result : std_logic_vector(31 downto 0);
+signal ror_result : std_logic_vector(31 downto 0);
+signal rol_result : std_logic_vector(31 downto 0);
 -- map components
 begin
 addition : rca32_add
@@ -74,9 +108,36 @@ subtract : sub
 		B => Bin, 
 		output => sub_result
 	);
+	
+shiftedR : shiftR 
+	port map(
+	A => Ain, 
+	B => Bin,
+	output => shr_result
+);
 
-ALU: process(Ain, Bin, andS, orS, notS, addS, subS, shrS, shraS, shlS, shcS, negS, 
-				 add_result, sub_result, neg_result) is
+shiftedL : shiftL
+port map(
+	A => Ain, 
+	B => Bin,
+	output => shl_result
+	);
+	
+rotatedR : rotateR
+port map(
+	A => Ain, 
+	B => Bin,
+	output => ror_result
+	);
+
+rotatedL : rotateL
+port map(
+	A => Ain, 
+	B => Bin,
+	output => rol_result
+	);
+ALU: process(Ain, Bin, andS, orS, notS, addS, subS, shrS, rorS, shlS, rolS, negS, 
+				 add_result, sub_result, neg_result, shr_result, shl_result, ror_result, rol_result) is
 begin
 	if (andS = '1') then 
 		Cout(63 downto 32) <= (others => '0');
@@ -102,6 +163,19 @@ begin
 		Cout(63 downto 32) <= (others => '1');
 		Cout(31 downto 0) <= neg_result;
 		
+	elsif(shrS = '1') then
+		Cout(63 downto 32) <= (others => '0');
+		Cout(31 downto 0) <= shr_result;
+		
+	elsif(shlS = '1') then
+		Cout(63 downto 32) <= (others => '0');
+		Cout(31 downto 0) <= shl_result;
+	elsif(rorS = '1') then
+		Cout(63 downto 32) <= (others => '0');
+		Cout(31 downto 0) <= ror_result;
+	elsif(rolS = '1') then
+		Cout(63 downto 32) <= (others => '0');
+		Cout(31 downto 0) <= rol_result;
 	else
 		Cout <= (others => '0');
 
