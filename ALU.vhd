@@ -79,6 +79,16 @@ component rotateL is
 			output: out std_logic_vector(31 downto 0));
 end component;
 
+component BoothMultiplier is
+	port(M, Q: in std_logic_vector(31 downto 0);
+			product: out std_logic_vector(63 downto 0));
+end component;
+
+component division is 
+	port( Divisor, Dividend: in std_logic_vector(31 downto 0);
+			Quotient: out std_logic_vector(63 downto 0));
+end component;
+
 -- define internal signals
 signal add_result : std_logic_vector(31 downto 0);
 signal sub_result : std_logic_vector(63 downto 0);
@@ -87,6 +97,8 @@ signal shr_result : std_logic_vector(31 downto 0);
 signal shl_result : std_logic_vector(31 downto 0);
 signal ror_result : std_logic_vector(31 downto 0);
 signal rol_result : std_logic_vector(31 downto 0);
+signal mul_result : std_logic_vector(63 downto 0);
+signal div_result : std_logic_vector(63 downto 0);
 -- map components
 begin
 addition : rca32_add
@@ -136,8 +148,23 @@ port map(
 	B => Bin,
 	output => rol_result
 	);
-ALU: process(Ain, Bin, andS, orS, notS, addS, subS, shrS, rorS, shlS, rolS, negS, 
-				 add_result, sub_result, neg_result, shr_result, shl_result, ror_result, rol_result) is
+	
+multiply : BoothMultiplier
+port map(
+	M => Ain, 
+	Q => Bin, 
+	product => mul_result
+	);
+	
+divide : division
+port map(
+	Divisor => Bin, 
+	Dividend => Ain,
+	Quotient => div_result
+	);
+
+ALU: process(Ain, Bin, andS, orS, notS, addS, subS, shrS, rorS, shlS, rolS, negS, multS, divS,
+				 add_result, sub_result, neg_result, shr_result, shl_result, ror_result, rol_result, mul_result, div_result) is
 begin
 	if (andS = '1') then 
 		Cout(63 downto 32) <= (others => '0');
@@ -156,9 +183,8 @@ begin
 		Cout(31 downto 0) <= add_result;
 		
 	elsif(subS = '1') then
-		--Cout(63 downto 32) <= (others => '0');
-		--Cout(31 downto 0) <= sub_result;
 		Cout <= sub_result;
+		
 	elsif(negS = '1') then
 		Cout(63 downto 32) <= (others => '1');
 		Cout(31 downto 0) <= neg_result;
@@ -176,6 +202,11 @@ begin
 	elsif(rolS = '1') then
 		Cout(63 downto 32) <= (others => '0');
 		Cout(31 downto 0) <= rol_result;
+	elsif(multS = '1') then
+		Cout(63 downto 0) <= mul_result;
+		
+	elsif(divS = '1') then
+		Cout(63 downto 0) <= div_result;
 	else
 		Cout <= (others => '0');
 
