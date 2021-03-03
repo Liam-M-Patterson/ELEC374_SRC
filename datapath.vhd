@@ -92,6 +92,15 @@ port(
 	);
 end component selEncode;
 
+component conFF is 
+	port(
+		IRout : in std_logic_vector(31 downto 0);
+		BusMuxOut : in std_logic_vector(31 downto 0);
+		conIN : in std_logic;
+		control : out std_logic
+	);
+end component conFF;
+
 
 component reg32 is
 	port(
@@ -109,6 +118,7 @@ component reg0 is
 			BAout : in std_logic
 	);
 end component;
+
 --declare signals
 signal YdataOut, BusMuxOut : std_logic_vector(31 downto 0);
 --signal Mdatain : std_logic_vector(31 downto 0);
@@ -137,6 +147,8 @@ signal R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10
 --select encode signals
 signal Gra, Grb, Grc, Rin, Rout, BAout : std_logic;
 
+--control unit signals
+signal con, conIN : std_logic;
 begin -- datapath architecture
 
 ALUentity : ALU 
@@ -273,6 +285,15 @@ port map(
 	
 	CSignEx => busMuxCoutin
 	);
+
+control_logic : conFF
+port map(
+		IRout => IRctl,
+		BusMuxOut  => BusMuxOut,
+		conIN => conIN,
+		control => con
+	);
+	
 --define registers
 
 register0 : reg0
