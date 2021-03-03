@@ -12,28 +12,34 @@ end entity divison;
 architecture behavioural of divison is
 begin 
 	process(Divisor,Dividend)
+	variable shifted: std_logic_vector(31 downto 0);
 	variable A: std_logic_vector(31 downto 0);
+	variable Q: std_logic_vector(31 downto 0);
 	variable tmp_quotient: std_logic_vector(31 downto 0);
 	variable fixed_Divisor: std_logic_vector(31 downto 0);
 	begin	
 		A:="00000000000000000000000000000000";
-		
+		Q:= dividend;
 		tmp_quotient:= Dividend;
 		fixed_Divisor:= Divisor;
-		divisor:= divisor sll 1;
+
+		
 		for i in 0 to 31 loop
-			A:= A sll 1;
-			A(0) := dividend(31);
-			dividend:= dividend sll 1;
+			shifted(31 downto 1):= A(30 downto 0);
+			shifted(0):= Q(31);
+			A:= shifted;
+			shifted(31 downto 1):= Q(30 downto 0);
+			shifted(0):= '0';
+			Q:= shifted;
 			A:= A - divisor;
 			if ((A(31) = '1')) then
-				dividend(0):= 0;
+				Q(0):= '0';
 				A:= A + Divisor;
 			else
-				dividend(0):=1;
+				Q(0):='1';
 			end if;
 			end loop;
-			Quotient <= dividend;
+			Quotient <= Q;
 			remainder <= A;
 			end process;
 			end architecture behavioural;

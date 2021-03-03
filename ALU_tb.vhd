@@ -93,8 +93,34 @@ UUT : ALU port map(
 			wait for 5 ns;
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			negS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0';rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			shrS <= '1';
+			
 			wait for 5 ns;
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			shlS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			rorS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			rolS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			multS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			divS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+
 			shrS <= '1';
 			wait for 5 ns;
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
@@ -116,6 +142,7 @@ UUT : ALU port map(
 			
 			wait for 35 ns;
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+
 			
 		end process;
 		

@@ -53,6 +53,7 @@ port(
 	);
 end component;
 
+
 component shiftR is
 port(
 		A: in std_logic_vector(31 downto 0);
@@ -87,6 +88,7 @@ end component;
 component division is 
 	port( Divisor, Dividend: in std_logic_vector(31 downto 0);
 			Quotient: out std_logic_vector(63 downto 0));
+
 end component;
 
 -- define internal signals
@@ -98,7 +100,9 @@ signal shl_result : std_logic_vector(31 downto 0);
 signal ror_result : std_logic_vector(31 downto 0);
 signal rol_result : std_logic_vector(31 downto 0);
 signal mul_result : std_logic_vector(63 downto 0);
+
 signal div_result : std_logic_vector(63 downto 0);
+
 -- map components
 begin
 addition : rca32_add
@@ -127,6 +131,7 @@ shiftedR : shiftR
 	B => Bin,
 	output => shr_result
 );
+
 
 shiftedL : shiftL
 port map(
@@ -165,6 +170,7 @@ port map(
 
 ALU: process(Ain, Bin, andS, orS, notS, addS, subS, shrS, rorS, shlS, rolS, negS, multS, divS,
 				 add_result, sub_result, neg_result, shr_result, shl_result, ror_result, rol_result, mul_result, div_result) is
+
 begin
 	if (andS = '1') then 
 		Cout(63 downto 32) <= (others => '0');
@@ -196,17 +202,21 @@ begin
 	elsif(shlS = '1') then
 		Cout(63 downto 32) <= (others => '0');
 		Cout(31 downto 0) <= shl_result;
+
 	elsif(rorS = '1') then
 		Cout(63 downto 32) <= (others => '0');
 		Cout(31 downto 0) <= ror_result;
 	elsif(rolS = '1') then
 		Cout(63 downto 32) <= (others => '0');
 		Cout(31 downto 0) <= rol_result;
+
 	elsif(multS = '1') then
 		Cout(63 downto 0) <= mul_result;
 		
 	elsif(divS = '1') then
+
 		Cout(63 downto 0) <= div_result;
+
 	else
 		Cout <= (others => '0');
 
