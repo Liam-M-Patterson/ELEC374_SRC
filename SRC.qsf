@@ -38,7 +38,7 @@
 
 set_global_assignment -name FAMILY "Cyclone III"
 set_global_assignment -name DEVICE EP3C16F484C6
-set_global_assignment -name TOP_LEVEL_ENTITY datapath
+set_global_assignment -name TOP_LEVEL_ENTITY SRC
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "21:36:22  FEBRUARY 03, 2021"
 set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
@@ -49,28 +49,13 @@ set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
 set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
 set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name VHDL_FILE reg32.vhd
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name VHDL_FILE encoder32to5.vhd
 set_global_assignment -name BDF_FILE bus.bdf
 set_global_assignment -name VHDL_FILE bus_mux.vhd
-set_global_assignment -name VHDL_FILE ALU.vhd
-set_global_assignment -name VHDL_FILE bus_main.vhd
-set_global_assignment -name VHDL_FILE datapath.vhd
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name VHDL_FILE division.vhd
-set_global_assignment -name VHDL_FILE MDMux.vhd
-set_global_assignment -name VHDL_FILE MDR.vhd
-set_global_assignment -name VHDL_FILE neg.vhd
-set_global_assignment -name VHDL_FILE rca32_add.vhd
-set_global_assignment -name VHDL_FILE rotateL.vhd
-set_global_assignment -name VHDL_FILE rotateR.vhd
-set_global_assignment -name VHDL_FILE shiftL.vhd
-set_global_assignment -name VHDL_FILE shiftL64.vhd
-set_global_assignment -name VHDL_FILE shiftR.vhd
-set_global_assignment -name VHDL_FILE sub.vhd
-set_global_assignment -name VHDL_FILE BoothMultiplier.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
