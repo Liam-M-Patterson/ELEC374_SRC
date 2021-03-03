@@ -101,6 +101,14 @@ component reg32 is
 	);
 end component;
 
+component reg0 is 
+	port(
+			d : in std_logic_vector(31 downto 0);
+			q : out std_logic_vector(31 downto 0);
+			clear, clock, enable : in std_logic;
+			BAout : in std_logic
+	);
+end component;
 --declare signals
 signal YdataOut, BusMuxOut : std_logic_vector(31 downto 0);
 --signal Mdatain : std_logic_vector(31 downto 0);
@@ -267,10 +275,11 @@ port map(
 	);
 --define registers
 
-reg0 : reg32
+register0 : reg0
 port map(
 	d => BusMuxOut,
 	q => busMuxR0in,
+	BAout => BAout,
 	clear => reset, 
 	clock => Clock, 
 	enable => R0in
