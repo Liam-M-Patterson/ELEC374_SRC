@@ -80,6 +80,19 @@ port(
 end component MDR;
 
 
+component selEncode is
+port(
+		Gra, Grb, Grc, Rin, Rout, BAout : in std_logic;
+		IRin : in std_logic_vector(31 downto 0);
+		
+		R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : out std_logic;
+		R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : out std_logic;
+		
+		CSignEx : out std_logic_vector(31 downto 0)
+	);
+end component selEncode;
+
+
 component reg32 is
 	port(
 			d : in std_logic_vector(31 downto 0);
@@ -113,7 +126,8 @@ signal busMuxR0in, busMuxR1in, busMuxR2in, busMuxR3in, busMuxR4in, busMuxR5in, b
 --signal R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : std_logic;
 --signal PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : std_logic;
 
-
+--select encode signals
+signal Gra, Grb, Grc, Rin, Rout, BAout : std_logic;
 
 begin -- datapath architecture
 
@@ -205,6 +219,52 @@ port map(
 	enable => MDRin
 	);
 	
+selectAndEnocde : selEncode
+port map(
+	Gra => Gra, 
+	Grb => Grb, 
+	Grc => Grc, 
+	Rin => Rin, 
+	Rout => Rout, 
+	BAout => BAout,
+	IRin => IRctl,
+	
+	R0in => R0in,
+	R1in => R1in,
+	R2in => R2in,
+	R3in => R3in,
+	R4in => R4in,
+	R5in => R5in,
+	R6in => R6in,
+	R7in => R7in,
+	R8in => R8in,
+	R9in => R9in,
+	R10in => R10in,
+	R11in => R11in,
+	R12in => R12in,
+	R13in => R13in,
+	R14in => R14in,
+	R15in => R15in,
+	
+	R0out => R0out,
+	R1out => R1out,
+	R2out => R2out,
+	R3out => R3out,
+	R4out => R4out,
+	R5out => R5out,
+	R6out => R6out,
+	R7out => R7out,
+	R8out => R8out,
+	R9out => R9out,
+	R10out => R10out,
+	R11out => R11out,
+	R12out => R12out,
+	R13out => R13out,
+	R14out => R14out,
+	R15out => R15out,
+	
+	CSignEx => busMuxCoutin
+	);
 --define registers
 
 reg0 : reg32
