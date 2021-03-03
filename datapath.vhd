@@ -16,8 +16,8 @@ port(
 --	
 --	HIval, LOval, IRval, PCval, MDRval : out std_logic_vector(31 downto 0)
 --	--MDRin, MARin : out std_logic_vector(31 downto 0)
-	R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : in std_logic;
-	R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : in std_logic;
+	--R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : in std_logic;
+	--R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : in std_logic;
 	
 	Zin, HIin, LOin, PCin, Coutin, INPORTin, IRin, MDRin, MARin, Yin : in std_logic;
 	PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : in std_logic;
@@ -109,7 +109,7 @@ signal ALU_out : std_logic_vector(63 downto 0);
 --signal ZHIout, ZLOout : std_logic;--std_logic_vector(31 downto 0);
 
 
---signal R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : std_logic;
+signal R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : std_logic;
 --signal ZHIin, ZLOin, HIin, LOin, PCin, Coutin, INPORTin, IRin : std_logic;
 
 --signal Yin, MARin, MDRin, readS  : std_logic;
@@ -123,7 +123,7 @@ signal busMuxZHIin, busMuxZLOin, busMuxHIin, busMuxLOin, busMuxPCin, busMuxCouti
 signal busMuxR0in, busMuxR1in, busMuxR2in, busMuxR3in, busMuxR4in, busMuxR5in, busMuxR6in, busMuxR7in, busMuxR8in, busMuxR9in, busMuxR10in, busMuxR11in, busMuxR12in, busMuxR13in, busMuxR14in, busMuxR15in : std_logic_vector(31 downto 0);
 
 --bus select signals
---signal R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : std_logic;
+signal R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : std_logic;
 --signal PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : std_logic;
 
 --select encode signals
