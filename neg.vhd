@@ -18,7 +18,7 @@ architecture behaviour of neg is
 signal result : std_logic_vector(31 downto 0);
 
 begin
-negate: process(result)
+negate: process(A, result)
 begin
 	for i in 0 to 31 loop
 		if A(i) = '0' then
@@ -28,7 +28,6 @@ begin
 		end if;
 	end loop;
 	
-	output <= result + '1'; --"00000000000000000000000000000001";
-
+	output <= result + '1'; 
 end process;
 end architecture;

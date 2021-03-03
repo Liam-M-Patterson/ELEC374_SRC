@@ -5,7 +5,7 @@ use ieee.std_logic_1164.all;
 entity reg32 is 
 	port(
 			d : in std_logic_vector(31 downto 0);
-			q : out std_logic_vector(31 downto 0);
+			q : out std_logic_vector(31 downto 0) := x"00000000";
 			clear, clock, enable : in std_logic
 	);
 end entity;

@@ -1,7 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-
 entity ALU_tb is
 end entity;
 
@@ -73,8 +72,9 @@ UUT : ALU port map(
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			--Ain <= "01111111111111111111111111111111"; -- 11
 			--Bin <= "11111111111110000000000111111111"; -- 73
-			Ain <= "00000000000000000000000000001011";
-			Bin <= "00000000000000000000000001001001";
+			Ain <= "00000000000000000000000000000011";
+			Bin <= "00000000000000000000000000000010";
+			--Bin <= "00000000000000000000000000000011";
 			wait for 1 ns;
 			
 			andS <= '1';
@@ -120,6 +120,29 @@ UUT : ALU port map(
 			
 			wait for 5 ns;
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+
+			shrS <= '1';
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			shlS <= '1';
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			rorS <= '1';
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			rolS <= '1';
+			
+			wait for 5 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			multS <= '1';
+			
+			wait for 35 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			divS <= '1';
+			
+			wait for 35 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+
 			
 		end process;
 		
