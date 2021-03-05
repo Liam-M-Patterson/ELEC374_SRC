@@ -93,6 +93,18 @@ component reg32 is
 	);
 end component;
 
+component ram
+	PORT
+	(
+		address		: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+		clock		: IN STD_LOGIC  := '1';
+		data		: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+		wren		: IN STD_LOGIC ;
+		q		: OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
+	);
+end component;
+
+
 --declare signals
 signal YdataOut, BusMuxOut : std_logic_vector(31 downto 0);
 --signal Mdatain : std_logic_vector(31 downto 0);
@@ -109,7 +121,9 @@ signal busMuxR0in, busMuxR1in, busMuxR2in, busMuxR3in, busMuxR4in, busMuxR5in, b
 --MAR
 signal MARout : std_logic_vector(8 downto 0);
 
-
+--Ram
+signal writeS : std_logic;
+signal RAMout : std_logic_vector(31 downto 0);
 
 begin -- datapath architecture
 
@@ -190,7 +204,14 @@ port map(
 	BusMuxOut => BusMuxOut
 	);
 	
-	
+ram_inst : ram PORT MAP (
+		address	 => MARout,
+		clock	 => Clock,
+		data	 => busMuxMDRin,
+		wren	 => writeS,
+		q	 => RAMout
+	);
+
 --define registers
 
 MDRunit : MDR
