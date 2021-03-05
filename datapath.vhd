@@ -24,8 +24,8 @@ port(
 
 	readS, andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : in std_logic;
 	IncPC : in std_logic;
-	Clock, reset : in std_logic;
-	Mdatain : in std_logic_vector (31 downto 0)
+	Clock, reset : in std_logic
+	--Mdatain : in std_logic_vector (31 downto 0)
 	);
 end entity datapath;
 
@@ -107,7 +107,7 @@ end component;
 
 --declare signals
 signal YdataOut, BusMuxOut : std_logic_vector(31 downto 0);
---signal Mdatain : std_logic_vector(31 downto 0);
+signal Mdatain : std_logic_vector(31 downto 0);
 signal IRctl : std_logic_vector(31 downto 0);
 signal ALU_out : std_logic_vector(63 downto 0);
 
@@ -209,7 +209,7 @@ ram_inst : ram PORT MAP (
 		clock	 => Clock,
 		data	 => busMuxMDRin,
 		wren	 => writeS,
-		q	 => RAMout
+		q	 =>  Mdatain
 	);
 
 --define registers
