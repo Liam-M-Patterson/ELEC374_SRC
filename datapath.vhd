@@ -7,14 +7,14 @@ port(
 --	Clock, reset, stop : in std_logic;
 --	--InPortData : in std_logic_vector(31 downto 0);
 --	BusOut : out std_logic_vector(31 downto 0);
---	
---	
---	R0val, R1val, R2val, R3val, R4val, R5val, R6val, R7val, R8val, R9val : out std_logic_vector(31 downto 0);
---	R10val, R11val, R12val, R13val, R14val, R15val : out std_logic_vector(31 downto 0);
---	
+	
+	
+
+
+	
 --	Z : out std_logic_vector(63 downto 0);
---	
---	HIval, LOval, IRval, PCval, MDRval : out std_logic_vector(31 downto 0)
+
+
 --	--MDRin, MARin : out std_logic_vector(31 downto 0)
 	--R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : in std_logic;
 	--R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : in std_logic;
@@ -22,12 +22,10 @@ port(
 	Zin, HIin, LOin, PCin, Coutin, INPORTin, OUTPORTin, IRin, MDRin, MARin, Yin : in std_logic;
 	PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : in std_logic;
 
-	
-	--MARin, Zin, PCin, MDRin, IRin, Yin: in std_logic;
 	readS, andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : in std_logic;
 	IncPC : in std_logic;
-	Clock, reset : in std_logic;
-	Mdatain : in std_logic_vector (31 downto 0)
+	Clock, reset : in std_logic
+	--Mdatain : in std_logic_vector (31 downto 0)
 	);
 end entity datapath;
 
@@ -79,6 +77,13 @@ port(
 	);
 end component MDR;
 
+component MARreg is
+port(
+			d : in std_logic_vector(31 downto 0);
+			q : out std_logic_vector(8 downto 0);
+			clear, clock, enable : in std_logic
+	);
+end component MARreg;
 
 component selEncode is
 port(
@@ -110,6 +115,18 @@ component reg32 is
 	);
 end component;
 
+component ram
+	PORT
+	(
+		address		: IN STD_LOGIC_VECTOR (8 DOWNTO 0);
+		clock		: IN STD_LOGIC  := '1';
+		data		: IN STD_LOGIC_VECTOR (31 DOWNTO 0);
+		wren		: IN STD_LOGIC ;
+		q		: OUT STD_LOGIC_VECTOR (31 DOWNTO 0)
+	);
+end component;
+
+
 component reg0 is 
 	port(
 			d : in std_logic_vector(31 downto 0);
@@ -119,12 +136,12 @@ component reg0 is
 	);
 end component;
 
+
 --declare signals
 signal YdataOut, BusMuxOut : std_logic_vector(31 downto 0);
---signal Mdatain : std_logic_vector(31 downto 0);
+signal Mdatain : std_logic_vector(31 downto 0);
 signal IRctl : std_logic_vector(31 downto 0);
 signal ALU_out : std_logic_vector(63 downto 0);
---signal ZHIout, ZLOout : std_logic;--std_logic_vector(31 downto 0);
 
 
 signal R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : std_logic;
@@ -140,6 +157,16 @@ signal R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in,
 signal busMuxZHIin, busMuxZLOin, busMuxHIin, busMuxLOin, busMuxPCin, busMuxCoutin, busMuxINPORTin, busMuxOUTPORTin, busMuxMDRin: std_logic_vector(31 downto 0);
 signal busMuxR0in, busMuxR1in, busMuxR2in, busMuxR3in, busMuxR4in, busMuxR5in, busMuxR6in, busMuxR7in, busMuxR8in, busMuxR9in, busMuxR10in, busMuxR11in, busMuxR12in, busMuxR13in, busMuxR14in, busMuxR15in : std_logic_vector(31 downto 0);
 
+
+
+--MAR
+signal MARout : std_logic_vector(8 downto 0);
+
+--Ram
+signal writeS : std_logic;
+signal RAMout : std_logic_vector(31 downto 0);
+
+
 --bus select signals
 signal R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : std_logic;
 --signal PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : std_logic;
@@ -149,6 +176,7 @@ signal Gra, Grb, Grc, Rin, Rout, BAout : std_logic;
 
 --control unit signals
 signal con, conIN : std_logic;
+
 begin -- datapath architecture
 
 ALUentity : ALU 
@@ -227,6 +255,16 @@ port map(
 	Cout => Cout,
 	BusMuxOut => BusMuxOut
 	);
+	
+ram_inst : ram PORT MAP (
+		address	 => MARout,
+		clock	 => Clock,
+		data	 => busMuxMDRin,
+		wren	 => writeS,
+		q	 =>  Mdatain
+	);
+
+--define registers
 
 MDRunit : MDR
 port map(
@@ -238,7 +276,17 @@ port map(
 	clear => reset,
 	enable => MDRin
 	);
+
+MAR : MARreg
+port map(
+	d => BusMuxOut,
+	q => MARout,
+	clear => reset, 
+	clock => Clock, 
+	enable => MARin
+	);
 	
+
 selectAndEnocde : selEncode
 port map(
 	Gra => Gra, 
@@ -295,6 +343,7 @@ port map(
 	);
 	
 --define registers
+
 
 register0 : reg0
 port map(
