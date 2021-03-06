@@ -21,6 +21,7 @@ port(
 	rolS : in std_logic;
 	negS : in std_logic;
 	multS : in std_logic;
+	incPC : in std_logic;
 	divS : in std_logic;
 	
 
@@ -102,6 +103,7 @@ signal rol_result : std_logic_vector(31 downto 0);
 signal mul_result : std_logic_vector(63 downto 0);
 
 signal div_result : std_logic_vector(63 downto 0);
+signal pc_result : std_logic_vector(31 downto 0);
 
 -- map components
 begin
@@ -110,6 +112,13 @@ addition : rca32_add
 		A => Ain,
 		B => Bin,
 		result => add_result
+	);
+
+incrementPC : rca32_add
+	port map(
+		A => x"00000001",
+		B => Bin,
+		result => pc_result
 	);
 
 negate : neg
@@ -168,8 +177,8 @@ port map(
 	Quotient => div_result
 	);
 
-ALU: process(Ain, Bin, andS, orS, notS, addS, subS, shrS, rorS, shlS, rolS, negS, multS, divS,
-				 add_result, sub_result, neg_result, shr_result, shl_result, ror_result, rol_result, mul_result, div_result) is
+ALU: process(Ain, Bin, andS, orS, notS, addS, subS, shrS, rorS, shlS, rolS, negS, multS, divS, incPC,
+				 add_result, sub_result, neg_result, shr_result, shl_result, ror_result, rol_result, mul_result, div_result, pc_result) is
 
 begin
 	if (andS = '1') then 
@@ -216,6 +225,10 @@ begin
 	elsif(divS = '1') then
 
 		Cout(63 downto 0) <= div_result;
+	
+	elsif(incPC = '1') then 
+		Cout(63 downto 32) <= (others => '0');
+		Cout(31 downto 0) <= pc_result;
 
 	else
 		Cout <= (others => '0');

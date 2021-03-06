@@ -21,6 +21,7 @@ architecture behaviour of ALU_tb is
 	signal negS : std_logic;
 	signal multS : std_logic;
 	signal divS : std_logic;
+	signal incPC : std_logic;
 	signal Cout : std_logic_vector(63 downto 0);
 	
 component ALU is
@@ -40,7 +41,7 @@ component ALU is
 		negS : in std_logic;
 		multS : in std_logic;
 		divS : in std_logic;
-		
+		incPC : in std_logic;
 
 		Cout : out std_logic_vector(63 downto 0)
 	);
@@ -62,6 +63,7 @@ UUT : ALU port map(
 		negS => negS,
 		multS => multS,
 		divS => divS,
+		incPC => incPc,
 		Cout => Cout
 		);
 	
@@ -69,11 +71,11 @@ UUT : ALU port map(
 
 		simulate_proccessor: process
 		begin
-			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0'; incPC <= '0';
 			--Ain <= "01111111111111111111111111111111"; -- 11
 			--Bin <= "11111111111110000000000111111111"; -- 73
 			Ain <= "00000000000000000000000000000011";
-			Bin <= "00000000000000000000000000000010";
+			Bin <= "00000000000000000000000000000001";
 			--Bin <= "00000000000000000000000000000011";
 			wait for 1 ns;
 			
@@ -139,6 +141,10 @@ UUT : ALU port map(
 			wait for 35 ns;
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
 			divS <= '1';
+			
+			wait for 35 ns;
+			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';
+			incPC <= '1';
 			
 			wait for 35 ns;
 			andS <= '0'; orS <= '0'; notS <= '0'; addS <= '0'; subS <= '0'; negS <= '0'; shrS <= '0'; rorS <= '0'; shlS <= '0'; rolS <= '0'; multS <= '0'; divS <= '0';

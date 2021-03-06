@@ -5,7 +5,7 @@ use ieee.std_logic_arith.all;
 entity datapath is
 port(
 --	Clock, reset, stop : in std_logic;
---	--InPortData : in std_logic_vector(31 downto 0);
+	INPORTdata, OUTPORTdata : in std_logic_vector(31 downto 0);
 --	BusOut : out std_logic_vector(31 downto 0);
 	
 	
@@ -23,6 +23,8 @@ port(
 	PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : in std_logic;
 
 	readS, andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : in std_logic;
+	
+	busGra, busGrb, busGrc, busRin, busRout, busBAout : in std_logic;
 	IncPC : in std_logic;
 	Clock, reset : in std_logic
 	--Mdatain : in std_logic_vector (31 downto 0)
@@ -49,7 +51,7 @@ port(
 	negS : in std_logic;
 	multS : in std_logic;
 	divS : in std_logic;
-	
+	incPC : in std_logic;
 
 	Cout : out std_logic_vector(63 downto 0)
 );
@@ -143,6 +145,7 @@ signal Mdatain : std_logic_vector(31 downto 0);
 signal IRctl : std_logic_vector(31 downto 0);
 signal ALU_out : std_logic_vector(63 downto 0);
 
+signal INPORTval, OUTPORTval : std_logic_vector(31 downto 0);
 
 signal R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : std_logic;
 --signal ZHIin, ZLOin, HIin, LOin, PCin, Coutin, INPORTin, IRin : std_logic;
@@ -195,6 +198,7 @@ port map(
 	negS => negS,
 	multS => mulS,
 	divS => divS,
+	incPC => incPC,
 	Cout => ALU_out
 );	
 
@@ -256,7 +260,8 @@ port map(
 	BusMuxOut => BusMuxOut
 	);
 	
-ram_inst : ram PORT MAP (
+ram_inst : ram 
+port map(
 		address	 => MARout,
 		clock	 => Clock,
 		data	 => busMuxMDRin,
@@ -271,7 +276,7 @@ port map(
 	MDR_in0 => BusMuxOut,
 	MDR_in1 => Mdatain,
 	MDR_out => busMuxMDRin,
-	read_mux => reads,
+	read_mux => readS,
 	clock => Clock,
 	clear => reset,
 	enable => MDRin
@@ -289,12 +294,12 @@ port map(
 
 selectAndEnocde : selEncode
 port map(
-	Gra => Gra, 
-	Grb => Grb, 
-	Grc => Grc, 
-	Rin => Rin, 
-	Rout => Rout, 
-	BAout => BAout,
+	Gra => busGra, 
+	Grb => busGrb, 
+	Grc => busGrc, 
+	Rin => busRin, 
+	Rout => busRout, 
+	BAout => busBAout,
 	IRin => IRctl,
 	
 	R0in => R0in,
@@ -349,7 +354,7 @@ register0 : reg0
 port map(
 	d => BusMuxOut,
 	q => busMuxR0in,
-	BAout => BAout,
+	BAout => busBAout,
 	clear => reset, 
 	clock => Clock, 
 	enable => R0in
@@ -510,7 +515,7 @@ port map(
 
 regINPORT : reg32
 port map(
-	d => BusMuxOut,
+	d => INPORTdata,
 	q => busMuxINPORTin,
 	clear => reset, 
 	clock => Clock, 
@@ -519,7 +524,7 @@ port map(
 	
 regOUTPORT : reg32
 port map(
-	d => BusMuxOut,
+	d => OUTPORTdata,
 	q => busMuxOUTPORTin,
 	clear => reset, 
 	clock => Clock, 
