@@ -11,34 +11,39 @@ END ENTITY ld_tb;
 --Architecture of the testbench with the signal names 
 ARCHITECTURE ld_tb_arch OF ld_tb IS
 --Add any other signalsto see in your simulation
-	SIGNAL PCout_tb, LOout_tb, HIout_tb, INPORTout_tb, MDRout_tb, Cout_tb: std_logic;
-	SIGNAL HIin_tb, LOin_tb, ZLOout_tb, ZHIout_tb, Coutin_tb, INPORTin_tb, MARin_tb, Zin_tb, PCin_tb, MDRin_tb, IRin_tb, Yin_tb : std_logic;
+	SIGNAL PCout_tb : std_logic := '0';
+	signal LOout_tb, HIout_tb, INPORTout_tb, MDRout_tb, Cout_tb: std_logic;
+	SIGNAL HIin_tb, LOin_tb, ZLOout_tb, ZHIout_tb, Coutin_tb, INPORTin_tb, OUTPORTin_tb, MARin_tb, Zin_tb, PCin_tb, MDRin_tb, IRin_tb, Yin_tb : std_logic;
 	
 	SIGNAL IncPC_tb, readS_tb, andS_tb, orS_tb, addS_tb, subS_tb, mulS_tb, divS_tb, shrS_tb, shlS_tb, rorS_tb, rolS_tb, negS_tb, notS_tb: std_logic;
 	
 	signal R0in_tb, R1in_tb, R2in_tb, R3in_tb, R4in_tb, R5in_tb, R6in_tb, R7in_tb, R8in_tb, R9in_tb, R10in_tb, R11in_tb, R12in_tb, R13in_tb, R14in_tb, R15in_tb : std_logic;
 	signal R0out_tb, R1out_tb, R2out_tb, R3out_tb, R4out_tb, R5out_tb, R6out_tb, R7out_tb, R8out_tb, R9out_tb, R10out_tb, R11out_tb, R12out_tb, R13out_tb, R14out_tb, R15out_tb : std_logic; 
-	signal Gra_tb, Grb_tb, Grc_tb, BAout_tb, Rin_tb : std_logic;
+	
+	signal Gra_tb, Grb_tb, Grc_tb, BAout_tb, Rin_tb, Rout_tb : std_logic;
 	
 	SIGNAL Clock_tb, reset_tb : std_logic;
-	SIGNAL Mdatain_tb : std_logic_vector (31 downto 0);
-	TYPE State IS (default, Reg_load1a, Reg_load1b, Reg_load2a, Reg_load2b, Reg_load3a, Reg_load3b, T0, T1, T2, T3, T4, T5, T6, T7);
+	SIGNAL Mdatain_tb, INPORTval_tb, OUTPORTval_tb : std_logic_vector (31 downto 0);
+--	TYPE State IS (default, Reg_load1a, Reg_load1b, Reg_load2a, Reg_load2b, Reg_load3a, Reg_load3b, T0, T1, T2, T3, T4, T5, T6, T7);
+	TYPE State IS (default, Reg_load1a, Reg_load1b, T0, T1, T2, T3, T4, T5, T6, T6b, T7);
 	SIGNAL Present_state: State:= default;
 --component instantiation of the datapath
 
 COMPONENT datapath
 PORT (
 
-	R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : in std_logic;
-	R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : in std_logic;
-	
-	Zin, HIin, LOin, PCin, Coutin, INPORTin, IRin, MDRin, MARin, Yin : in std_logic;
+	--R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : in std_logic;
+	--R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : in std_logic;
+	InPortData, OUTPORTdata : in std_logic_vector(31 downto 0);
+	Zin, HIin, LOin, PCin, Coutin, INPORTin, OUTPORTin, IRin, MDRin, MARin, Yin : in std_logic;
 	PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : in std_logic;
 
 	readS, andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : in std_logic;
+	
+	busGra, busGrb, busGrc, busRin, busRout, busBAout : in std_logic;
 	IncPC : in std_logic;
-	Clock, reset : in std_logic;
-	Mdatain : in std_logic_vector (31 downto 0)
+	Clock, reset : in std_logic
+	--Mdatain : in std_logic_vector (31 downto 0)
 	
 --	PCout, ZLOout, MDRout, R2out, R4out : in std_logic;
 --	MARin, Zin, PCin, MDRin, IRin, Yin: in std_logic;
@@ -53,6 +58,9 @@ BEGIN
 DUT  : datapath
 --port mapping: between the dut and the testbench signals
 PORT MAP (
+	INPORTdata => INPORTval_tb,
+	OUTPORTdata => OUTPORTval_tb,
+	
 	PCout => PCout_tb,
 	ZHIout => ZHIout_tb,
 	ZLOout => ZLOout_tb,
@@ -62,10 +70,19 @@ PORT MAP (
 	INPORTout => INPORTout_tb,  
 	Cout => Cout_tb,
 	
+	busGra => Gra_tb,
+	busGrb => Grb_tb, 
+	busGrc => Grc_tb, 
+	busRin => Rin_tb, 
+	busRout => Rout_tb, 
+	busBAout => BAout_tb,
+	
+	
 	LOin => LOin_tb,
 	HIin => HIin_tb,
 	Coutin => Coutin_tb,
 	INPORTin => INPORTin_tb, 
+	OUTPORTin => OUTPORTin_tb,
 	MARin=>MARin_tb,
 	Zin=>Zin_tb,
 	PCin=>PCin_tb,
@@ -88,43 +105,43 @@ PORT MAP (
 	negS => negS_tb, 
 	notS => notS_tb,
 	
-	R0in => R0in_tb, 
-	R1in => R1in_tb, 
-	R2in => R2in_tb, 
-	R3in => R3in_tb, 
-	R4in => R4in_tb,
-	R5in => R5in_tb, 
-	R6in => R6in_tb, 
-	R7in => R7in_tb, 
-	R8in => R8in_tb, 
-	R9in => R9in_tb, 
-	R10in => R10in_tb, 
-	R11in => R11in_tb, 
-	R12in => R12in_tb, 
-	R13in => R13in_tb, 
-	R14in => R14in_tb,
-	R15in => R15in_tb,
-	
-	R0out => R0Out_tb, 
-	R1out => R1Out_tb,
-	R2out => R2Out_tb, 
-	R3out => R3Out_tb, 
-	R4out => R4Out_tb, 
-	R5out => R5Out_tb, 
-	R6out => R6Out_tb,
-	R7out => R7Out_tb, 
-	R8out => R8Out_tb, 
-	R9out => R9Out_tb, 
-	R10out => R10Out_tb, 
-	R11out => R11Out_tb, 
-	R12out => R12Out_tb, 
-	R13out => R13Out_tb, 
-	R14out => R14Out_tb, 
-	R15out => R15Out_tb,
+--	R0in => R0in_tb, 
+--	R1in => R1in_tb, 
+--	R2in => R2in_tb, 
+--	R3in => R3in_tb, 
+--	R4in => R4in_tb,
+--	R5in => R5in_tb, 
+--	R6in => R6in_tb, 
+--	R7in => R7in_tb, 
+--	R8in => R8in_tb, 
+--	R9in => R9in_tb, 
+--	R10in => R10in_tb, 
+--	R11in => R11in_tb, 
+--	R12in => R12in_tb, 
+--	R13in => R13in_tb, 
+--	R14in => R14in_tb,
+--	R15in => R15in_tb,
+--	
+--	R0out => R0Out_tb, 
+--	R1out => R1Out_tb,
+--	R2out => R2Out_tb, 
+--	R3out => R3Out_tb, 
+--	R4out => R4Out_tb, 
+--	R5out => R5Out_tb, 
+--	R6out => R6Out_tb,
+--	R7out => R7Out_tb, 
+--	R8out => R8Out_tb, 
+--	R9out => R9Out_tb, 
+--	R10out => R10Out_tb, 
+--	R11out => R11Out_tb, 
+--	R12out => R12Out_tb, 
+--	R13out => R13Out_tb, 
+--	R14out => R14Out_tb, 
+--	R15out => R15Out_tb,
 
 	Clock=>Clock_tb,
-	reset => reset_tb,
-	Mdatain=>Mdatain_tb
+	reset => reset_tb
+--	Mdatain=>Mdatain_tb
 	);
 	--add test logic here
 	Clock_process: PROCESS IS 
@@ -139,18 +156,20 @@ PORT MAP (
 	CASE Present_state IS 
 		WHEN Default=>	Present_state <= Reg_load1a;
 		WHEN Reg_load1a=> Present_state <= Reg_load1b;
-		WHEN Reg_load1b=>Present_state <= Reg_load2a;
-		WHEN Reg_load2a=>Present_state <= Reg_load2b;
-		WHEN Reg_load2b=>Present_state <= Reg_load3a;
-		WHEN Reg_load3a=>Present_state <= Reg_load3b;
-		WHEN Reg_load3b=>Present_state <= T0;
+		WHEN Reg_load1b=>Present_state <= T0;
+--		WHEN Reg_load2a=>Present_state <= Reg_load2b;
+--		WHEN Reg_load2b=>Present_state <= Reg_load3a;
+--		WHEN Reg_load3a=>Present_state <= Reg_load3b;
+--		WHEN Reg_load3b=>Present_state <= T0;
+		--WHEN Default => Present_state <=T0;
 		WHEN T0 =>Present_state <= T1;
 		WHEN T1 =>Present_state <= T2;
 		WHEN T2=>Present_state <= T3;
 		WHEN T3=>Present_state <= T4;
 		WHEN T4 =>Present_state <= T5;
 		WHEN T5 =>Present_state <= T6;
-		WHEN T6 =>Present_state <= T7;
+		WHEN T6 =>Present_state <= T6b;
+		WHEN T6b =>Present_state <= T7;
 		WHEN OTHERS =>
 		END CASE;
 		END IF;
@@ -235,94 +254,81 @@ BEGIN CASE Present_state IS        --assert the required signalsin each clock cy
 		BAout_tb <= '0';  
 		Rin_tb <= '0'; 
 		
-		Mdatain_tb <= x"00000000"; 
+		--Mdatain_tb <= x"00000000"; 
 		
 	WHEN Reg_load1a=>
-		Mdatain_tb <= x"00000022";
+		INPORTval_tb <= x"00000010";
 		readS_tb <= '0', '1' after 10 ns, '0' after 25 ns; --the first zero is there for completeness
-		MDRin_tb <= '0', '1' after 10 ns, '0' after 25 ns;
+		INPORTin_tb <= '0', '1' after 10 ns, '0' after 25 ns;
 	WHEN Reg_load1b=> 
-		MDRout_tb <= '1' after 10 ns, '0' after 25 ns;
-		R2in_tb <= '1' after 10 ns, '0' after 25 ns;--initialize R2 with the value $22
-	WHEN Reg_load2a=> 
-		Mdatain_tb <= x"00000024";
-		readS_tb <= '1' after 10 ns, '0' after 25 ns; 
-		MDRin_tb <= '1' after 10 ns, '0' after 25 ns;
-	WHEN Reg_load2b=> 
-		MDRout_tb <= '1' after 10 ns, '0' after 25 ns; 
-		R4in_tb <= '1' after 10 ns, '0' after 25 ns;--initialize R4 with the value $24 
-	WHEN Reg_load3a=> 
-		Mdatain_tb <= x"00000026";
-		readS_tb <= '1' after 10 ns, '0' after 25 ns; 
-		MDRin_tb <= '1' after 10 ns, '0' after 25 ns;
-	WHEN Reg_load3b=> 
-		MDRout_tb <= '1' after 10 ns, '0' after 25 ns; 
-		R5in_tb <= '1' after 10 ns, '0' after 25 ns;--initialize R5 with the value $26 
+		--INPORTout_tb <= '1' after 10 ns, '0' after 25 ns;
+		--MARin_tb <= '1' after 10 ns, '0' after 25 ns; --initialize R2 with the address 0
+--	WHEN Reg_load2a=> 
+--		--Mdatain_tb <= x"00000024";
+--		readS_tb <= '1' after 10 ns, '0' after 25 ns; 
+--		MDRin_tb <= '1' after 10 ns, '0' after 25 ns;
+--	WHEN Reg_load2b=> 
+--		MDRout_tb <= '1' after 10 ns, '0' after 25 ns; 
+--		R4in_tb <= '1' after 10 ns, '0' after 25 ns;--initialize R4 with the value $24 
+--	WHEN Reg_load3a=> 
+--		--Mdatain_tb <= x"00000026";
+--		readS_tb <= '1' after 10 ns, '0' after 25 ns; 
+--		MDRin_tb <= '1' after 10 ns, '0' after 25 ns;
+--	WHEN Reg_load3b=> 
+--		MDRout_tb <= '1' after 10 ns, '0' after 25 ns; 
+--		R5in_tb <= '1' after 10 ns, '0' after 25 ns;--initialize R5 with the value $26 
 		
 		
 	WHEN T0 => --see if you need to de-assert these signals
-		PCout_tb <= '1';
-		MARin_tb <= '1';
-		IncPC_tb <= '1';
-		Zin_tb <= '1'; 
+		PCout_tb <= '1' after 10 ns, '0' after 25 ns;
+		MARin_tb <= '1' after 10 ns, '0' after 25 ns;
+		IncPC_tb <= '1' after 10 ns, '0' after 25 ns;
+		Zin_tb <= '1' after 10 ns, '0' after 25 ns;
+		
 	WHEN T1=>
-		PCout_tb <= '0';
-		MARin_tb <= '0';
-		IncPC_tb <= '0';
-		Zin_tb <= '0';
 	
 	
-		ZLOout_tb <= '1';
-		PCin_tb <= '1';   
-		readS_tb <= '1';   
-		MDRin_tb <= '1';
-		Mdatain_tb<= x"4A920000";   --opcode for “and R5, R2, R4”
+		ZLOout_tb <= '1', '0' after 25 ns;
+		PCin_tb <= '1', '0' after 25 ns;   
+		readS_tb <= '1', '0' after 25 ns;  
+		MDRin_tb <= '1', '0' after 25 ns;
+		--Mdatain_tb<= x"4A920000";   --opcode for â€œand R5, R2, R4â€
 	WHEN T2=>
-		readS_tb <= '0';
-		MDRout_tb <= '1';   
-		IRin_tb <= '1';
+		MDRout_tb <= '1', '0' after 25 ns;   
+		IRin_tb <= '1', '0' after 25 ns;
 	WHEN T3=>
-		MDRout_tb <= '0';   
-		IRin_tb <= '0';
+		--MDRout_tb <= '0';   
+		--IRin_tb <= '0';
 	
-		Grb_tb <= '1';
-		BAout_tb <= '1';
+		Grb_tb <= '1', '0' after 25 ns;
+		BAout_tb <= '1', '0' after 25 ns;
 		
-		Yin_tb <= '1';
+		Yin_tb <= '1', '0' after 25 ns;
 	WHEN T4=>
-		Grb_tb <= '0';
-		BAout_tb <= '0';
-		Yin_tb <= '0';
 		
-		Cout_tb <= '1';
+		Cout_tb <= '1', '0' after 25 ns;
 		
-		addS_tb <= '1';
-		Zin_tb <= '1';
+		addS_tb <= '1', '0' after 25 ns;
+		Zin_tb <= '1', '0' after 25 ns;
 		
-	WHEN T5 =>
-		Cout_tb <= '0';
-		addS_tb <= '0';
-		Zin_tb <= '0';
-		
-		ZLOout_tb <= '1';   
-		MARin_tb <= '1';
-		
+	WHEN T5 =>		
+		ZLOout_tb <= '1', '0' after 20 ns;   
+		MARin_tb <= '1', '0' after 25 ns;
+		--readS_tb <= '0', '1' after 19 ns;
 		
 	WHEN T6 =>
-		ZLOout_tb <= '0';   
-		MARin_tb <= '0';
 		
-		readS_tb <= '1';
-		MDRin_tb <= '1';
-		Mdatain_tb<= x"4A920000";
+			
+	WHEN T6b =>
+		MDRin_tb <= '1', '0' after 25 ns;
+		readS_tb <= '1', '0' after 25 ns;
+		--Mdatain_tb<= x"4A920000";
 		
 	WHEN T7 =>
-		readS_tb <= '0';
-		MDRin_tb <= '0';
 		
-		MDRout_tb <= '1';
-		Gra_tb <= '1';
-		Rin_tb <= '1';
+		MDRout_tb <= '1' after 2 ns, '0' after 25 ns;
+		Gra_tb <= '1', '0' after 25 ns;
+		Rin_tb <= '1', '0' after 25 ns;
 	
 	WHEN OTHERS =>
 	END CASE;

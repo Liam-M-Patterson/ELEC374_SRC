@@ -37,6 +37,8 @@ begin
 			decodeOut <= "0100";
 		when "11" => 
 			decodeOut <= "1000";
+		when others =>
+			decodeOut <= "0000";
 	end case;
 	
 	conDIN <= ( (not busOR and decodeOut(0)) or (busOR and decodeOut(1)) or (not BusMuxOut(31) and decodeOut(2)) or (BusMuxOut(31) and decodeOut(3)));

@@ -76,7 +76,7 @@ architecture behaviour of selEncode is
 	--assert register in and out signals
 	R0in <= decoderOut(0) and Rin;
 	R1in <= decoderOut(1) and Rin;
-	R2in <= decoderOut(3) and Rin;
+	R2in <= decoderOut(2) and Rin;
 	R3in <= decoderOut(3) and Rin;
 	R4in <= decoderOut(4) and Rin;
 	R5in <= decoderOut(5) and Rin;
@@ -93,7 +93,7 @@ architecture behaviour of selEncode is
 	
 	R0out <= decoderOut(0) and (Rout or BAout);
 	R1out <= decoderOut(1) and (Rout or BAout);
-	R2out <= decoderOut(3) and (Rout or BAout);
+	R2out <= decoderOut(2) and (Rout or BAout);
 	R3out <= decoderOut(3) and (Rout or BAout);
 	R4out <= decoderOut(4) and (Rout or BAout);
 	R5out <= decoderOut(5) and (Rout or BAout);

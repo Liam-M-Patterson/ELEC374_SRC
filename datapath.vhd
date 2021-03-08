@@ -22,7 +22,7 @@ port(
 	Zin, HIin, LOin, PCin, Coutin, INPORTin, OUTPORTin, IRin, MDRin, MARin, Yin : in std_logic;
 	PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : in std_logic;
 
-	readS, andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : in std_logic;
+	readS, writeS, andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : in std_logic;
 	
 	busGra, busGrb, busGrc, busRin, busRout, busBAout : in std_logic;
 	IncPC : in std_logic;
@@ -166,7 +166,7 @@ signal busMuxR0in, busMuxR1in, busMuxR2in, busMuxR3in, busMuxR4in, busMuxR5in, b
 signal MARout : std_logic_vector(8 downto 0);
 
 --Ram
-signal writeS : std_logic;
+--signal writeS : std_logic;
 signal RAMout : std_logic_vector(31 downto 0);
 
 
