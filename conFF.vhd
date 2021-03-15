@@ -45,8 +45,6 @@ begin
 	
 	if(conIN ='1') then
 		control <= conDIN;
-	else
-		control <= '0';
 	end if;
 	end process;
 end architecture behaviour;

@@ -21,14 +21,15 @@ ARCHITECTURE phase2_tb_arch OF phase2_tb IS
 	--signal R0out_tb, R1out_tb, R2out_tb, R3out_tb, R4out_tb, R5out_tb, R6out_tb, R7out_tb, R8out_tb, R9out_tb, R10out_tb, R11out_tb, R12out_tb, R13out_tb, R14out_tb, R15out_tb : std_logic; 
 	
 	signal Gra_tb, Grb_tb, Grc_tb, BAout_tb, Rin_tb, Rout_tb : std_logic;
-	
+	signal CONin_tb, con_tb : std_logic;
 	SIGNAL Clock_tb, reset_tb : std_logic;
 	SIGNAL Mdatain_tb, INPORTval_tb, OUTPORTval_tb : std_logic_vector (31 downto 0);
 --	TYPE State IS (default, Reg_load1a, Reg_load1b, Reg_load2a, Reg_load2b, Reg_load3a, Reg_load3b, T0, T1, T2, T3, T4, T5, T6, T7);
 	TYPE State IS (default, PC_load1a, PC_load1b, T0, T1, T2, T2b, T3, T4, T5, T6, T6b, T7, Tresult);
 	SIGNAL Present_state: State:= default;
 	
-	type instrucState is (ld1, ld2, ldi1, ldi2, st1, st1_check, st2, st2_check, addi, andi, ori, brzr, brnz, brpl, brmi, jr, jal, mfhi, mflo, IOin, IOout);
+	type instrucState is (ld1, ld2, ldi1, ldi2, st1, st1_check, st2, st2_check, addi, andi, ori, preloadR1, preloadR2, preloadR3, brzr_no, brzr_yes,
+	brnz_no, brnz_yes, brpl_no, brpl_yes, brmi_no, brmi_yes, preloadR1a, jr, preloadR1b, jal, mfhi, mflo, IOin, IOout);
 	signal present_instruc: instrucState := ld1;
 --component instantiation of the datapath
 
@@ -40,7 +41,8 @@ PORT (
 	InPortData, OUTPORTdata : in std_logic_vector(31 downto 0);
 	Zin, HIin, LOin, PCin, Coutin, INPORTin, OUTPORTin, IRin, MDRin, MARin, Yin : in std_logic;
 	PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : in std_logic;
-
+	con : out std_logic;
+	conIN : in std_logic;
 	readS, writeS, andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : in std_logic;
 	
 	busGra, busGrb, busGrc, busRin, busRout, busBAout : in std_logic;
@@ -93,6 +95,9 @@ PORT MAP (
 	IRin=>IRin_tb,
 	Yin=>Yin_tb,
 	IncPC =>IncPC_tb,
+	
+	con => con_tb,
+	conIN => conIN_tb,
 	
 	writeS => writeS_tb,
 	readS=>readS_tb,
@@ -156,13 +161,24 @@ PORT MAP (
 				when st2_check => present_instruc <= addi;
 				when addi => present_instruc <= andi;
 				when andi => present_instruc <= ori;
-				when ori => present_instruc <= brzr;
-				when brzr => present_instruc <= brnz;
-				when brnz => present_instruc <= brpl;
-				when brpl => present_instruc <= brmi;
-				when brmi => present_instruc <= jr;
-				when jr => present_instruc <= jal;
-				when jal => present_instruc <= mfhi;
+				when ori => present_instruc <= preloadR1;
+				
+				when preloadR1 => present_instruc <= preloadR2;
+				when preloadR2 => present_instruc <= preloadR3;
+				when preloadR3 => present_instruc <= brzr_no;
+				when brzr_no => present_instruc <= brzr_yes;
+				when brzr_yes => present_instruc <= brnz_no;
+				when brnz_no => present_instruc <= brnz_yes;
+				when brnz_yes => present_instruc <= brpl_no;
+				when brpl_no => present_instruc <= brpl_yes;
+				when brpl_yes => present_instruc <= brmi_no;
+				when brmi_no => present_instruc <= brmi_yes;
+				when brmi_yes => present_instruc <= preloadR1a; 
+				
+				when preloadR1a => present_instruc <= jr;
+				when jr => present_instruc <= preloadR1b;
+				when preloadR1b => present_instruc <= jal;
+				when jal => present_instruc <= mfhi;				
 				when mfhi => present_instruc <= mflo;
 				when mflo => present_instruc <= IOin;
 				when IOin => present_instruc <= IOout;
@@ -177,7 +193,7 @@ PORT MAP (
 PROCESS (Present_state, present_instruc) IS--do the required job ineach state
 BEGIN 
 case present_instruc is 
-	when ld1 => 
+	when ld1 =>  -- address 0
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 
 			WHEN Default=>	
@@ -186,7 +202,7 @@ case present_instruc is
 				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
 				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
 				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
-				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
 				
 			WHEN PC_load1a=>
 				INPORTval_tb <= x"00000000";
@@ -206,12 +222,15 @@ case present_instruc is
 			WHEN T1=>
 				ZLOout_tb <= '1', '0' after 25 ns;
 				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
 				readS_tb <= '1', '0' after 25 ns;  
 				MDRin_tb <= '1', '0' after 25 ns;
-
-			WHEN T2=>
+			WHEN T2b=>
 				MDRout_tb <= '1', '0' after 25 ns;   
 				IRin_tb <= '1', '0' after 25 ns;
+				
 			WHEN T3=>
 				Grb_tb <= '1', '0' after 25 ns;
 				BAout_tb <= '1', '0' after 25 ns;
@@ -231,14 +250,14 @@ case present_instruc is
 				readS_tb <= '1', '0' after 25 ns;
 				
 			WHEN T7 =>
-				MDRout_tb <= '1', '0' after 25 ns;
+				MDRout_tb <= '1', '0' after 20 ns;
 				Gra_tb <= '1', '0' after 25 ns;
 				Rin_tb <= '1', '0' after 25 ns;
 			
 			WHEN OTHERS =>
 			END CASE;
 			
-	when ld2 => 
+	when ld2 => -- address 1
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 
 			WHEN Default=>	
@@ -297,7 +316,7 @@ case present_instruc is
 			WHEN OTHERS =>
 			END CASE;
 			
-	when ldi1 =>
+	when ldi1 => -- address 2
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 
 			WHEN Default=>	
@@ -343,16 +362,11 @@ case present_instruc is
 				ZLOout_tb <= '1', '0' after 25 ns;   
 				Gra_tb <= '1', '0' after 25 ns;   
 				Rin_tb <= '1', '0' after 25 ns;   
-				
-			WHEN T6 =>
-			WHEN T6b =>				
-			WHEN T7 =>
-			
-			
+	
 			WHEN OTHERS =>
 			END CASE;
 			
-	when ldi2 =>
+	when ldi2 => -- address 3
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 
 			WHEN Default=>	
@@ -398,15 +412,10 @@ case present_instruc is
 				ZLOout_tb <= '1', '0' after 25 ns;   
 				Gra_tb <= '1', '0' after 25 ns;   
 				Rin_tb <= '1', '0' after 25 ns;   
-				
-			WHEN T6 =>
-			WHEN T6b =>				
-			WHEN T7 =>
-			
 			
 			WHEN OTHERS =>
 			END CASE;
-	when st1 =>
+	when st1 => -- address 4
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 			WHEN Default=>	
 				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
@@ -415,10 +424,7 @@ case present_instruc is
 				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
 				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
 				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
-				
-			WHEN PC_load1a=>
-			WHEN PC_load1b=> 				
-				
+	
 			WHEN T0 => --see if you need to de-assert these signals
 				PCout_tb <= '1', '0' after 25 ns;
 				MARin_tb <= '1', '0' after 25 ns;
@@ -468,7 +474,7 @@ case present_instruc is
 			WHEN OTHERS =>
 			END CASE;
 			
-	when st1_check =>
+	when st1_check => -- address 5
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 
 			WHEN Default=>	
@@ -478,11 +484,7 @@ case present_instruc is
 				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
 				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
 				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
-				
-			WHEN PC_load1a=>
-			WHEN PC_load1b=> 
-				
-				
+
 			WHEN T0 => --see if you need to de-assert these signals
 				PCout_tb <= '1', '0' after 25 ns;
 				MARin_tb <= '1', '0' after 25 ns;
@@ -529,7 +531,7 @@ case present_instruc is
 			WHEN OTHERS =>
 			END CASE;
 			
-	when st2 =>
+	when st2 => -- address 6
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 			WHEN Default=>	
 				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
@@ -537,10 +539,7 @@ case present_instruc is
 				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
 				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
 				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
-				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
-				
-			WHEN PC_load1a=>
-			WHEN PC_load1b=> 				
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';			
 				
 			WHEN T0 => --see if you need to de-assert these signals
 				PCout_tb <= '1', '0' after 25 ns;
@@ -591,7 +590,7 @@ case present_instruc is
 			WHEN OTHERS =>
 			END CASE;
 			
-	when st2_check =>
+	when st2_check => -- address 7
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 
 			WHEN Default=>	
@@ -651,7 +650,8 @@ case present_instruc is
 			
 			WHEN OTHERS =>
 			END CASE;		
-	when addi => 
+			
+	when addi =>  -- address 8
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 
 			WHEN Default=>	
@@ -697,15 +697,10 @@ case present_instruc is
 				ZLOout_tb <= '1', '0' after 20 ns;   
 				Rin_tb <= '1', '0' after 25 ns;
 				Gra_tb <= '1', '0' after 25 ns;
-			WHEN T6 =>
-			WHEN T6b =>
-			
-				
-			WHEN T7 =>
-			
 			WHEN OTHERS =>
 			END CASE;
-	when andi => 
+			
+	when andi => -- address 9
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 
 			WHEN Default=>	
@@ -751,16 +746,11 @@ case present_instruc is
 				ZLOout_tb <= '1', '0' after 20 ns;   
 				Rin_tb <= '1', '0' after 25 ns;
 				Gra_tb <= '1', '0' after 25 ns;
-			WHEN T6 =>
-			WHEN T6b =>
-			
-				
-			WHEN T7 =>
 			
 			WHEN OTHERS =>
 			END CASE;
 			
-	when ori => 
+	when ori =>  -- address 10
 		CASE Present_state IS   --assert the required signalsin each clock cycle
 
 			WHEN Default=>	
@@ -812,6 +802,985 @@ case present_instruc is
 				
 			WHEN T7 =>
 			
+			WHEN OTHERS =>
+			END CASE;
+			
+	when preloadR1 => -- address 11 read from address 256, has value 9
+		CASE Present_state IS   --assert the required signalsin each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
+				
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns;  
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T3=>
+				Grb_tb <= '1', '0' after 25 ns;
+				BAout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				Cout_tb <= '1', '0' after 25 ns;
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				ZLOout_tb <= '1', '0' after 20 ns;   
+				MARin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T6 =>
+			WHEN T6b =>
+				MDRin_tb <= '1', '0' after 25 ns;
+				readS_tb <= '1', '0' after 25 ns;
+				
+			WHEN T7 =>
+				MDRout_tb <= '1', '0' after 20 ns;
+				Gra_tb <= '1', '0' after 25 ns;
+				Rin_tb <= '1', '0' after 25 ns;
+			
+			WHEN OTHERS =>
+			END CASE;
+			
+	when preloadR2 => -- address 12 read from address 257, has zero value
+		CASE Present_state IS   --assert the required signalsin each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
+				
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns;  
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T3=>
+				Grb_tb <= '1', '0' after 25 ns;
+				BAout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				Cout_tb <= '1', '0' after 25 ns;
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				ZLOout_tb <= '1', '0' after 20 ns;   
+				MARin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T6 =>
+			WHEN T6b =>
+				MDRin_tb <= '1', '0' after 25 ns;
+				readS_tb <= '1', '0' after 25 ns;
+				
+			WHEN T7 =>
+				MDRout_tb <= '1', '0' after 20 ns;
+				Gra_tb <= '1', '0' after 25 ns;
+				Rin_tb <= '1', '0' after 25 ns;
+			
+			WHEN OTHERS =>
+			END CASE;
+			
+	when preloadR3 => -- address 13 read from address 258, has value -60
+		CASE Present_state IS   --assert the required signalsin each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
+				
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns;  
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T3=>
+				Grb_tb <= '1', '0' after 25 ns;
+				BAout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				Cout_tb <= '1', '0' after 25 ns;
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				ZLOout_tb <= '1', '0' after 20 ns;   
+				MARin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T6 =>
+			WHEN T6b =>
+				MDRin_tb <= '1', '0' after 25 ns;
+				readS_tb <= '1', '0' after 25 ns;
+				
+			WHEN T7 =>
+				MDRout_tb <= '1', '0' after 20 ns;
+				Gra_tb <= '1', '0' after 25 ns;
+				Rin_tb <= '1', '0' after 25 ns;
+			
+			WHEN OTHERS =>
+			END CASE;
+			
+	when brzr_no => -- address 14
+		CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
+				
+				
+			
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1' after 2 ns, '0' after 25 ns;
+				CONin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				PCout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				Cout_tb <= '1', '0' after 25 ns;   
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN T6 =>
+			WHEN T6b =>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN T7 =>
+				PCout_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN Tresult => 
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN OTHERS =>
+			END CASE;
+			
+			
+	when brzr_yes => -- address 15
+		CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
+			
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1' after 2 ns, '0' after 25 ns;
+				CONin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				PCout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				Cout_tb <= '1', '0' after 25 ns;   
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN T6 =>
+			WHEN T6b =>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN T7 =>
+				PCout_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN Tresult => 
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN OTHERS =>
+			END CASE;
+			
+	when brnz_no => -- address 52
+		CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
+			
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1', '0' after 25 ns;
+				CONin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				PCout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				Cout_tb <= '1', '0' after 25 ns;   
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN T6 =>
+			WHEN T6b =>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN T7 =>
+				PCout_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN Tresult => 
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN OTHERS =>
+			END CASE;				
+			
+	when brnz_yes => -- address 53 increments PC by 36, RAM address 90 was not working, Whitehall said to avoid it
+		CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
+			
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1', '0' after 25 ns;
+				CONin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				PCout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				Cout_tb <= '1', '0' after 25 ns;   
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN T6 =>
+			WHEN T6b =>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN T7 =>
+				PCout_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN Tresult => 
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN OTHERS =>
+			END CASE;	
+			
+	when brpl_no => -- address 91
+			CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
+			
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1', '0' after 25 ns;
+				CONin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				PCout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				Cout_tb <= '1', '0' after 25 ns;   
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN T6 =>
+			WHEN T6b =>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN T7 =>
+				PCout_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN Tresult => 
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN OTHERS =>
+			END CASE;	
+	
+	when brpl_yes => -- address 92
+		CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
+			
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1', '0' after 25 ns;
+				CONin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				PCout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				Cout_tb <= '1', '0' after 25 ns;   
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN T6 =>
+			WHEN T6b =>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN T7 =>
+				PCout_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN Tresult => 
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN OTHERS =>
+			END CASE;
+			
+	when brmi_no => -- address 129
+		CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
+				
+			
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1', '0' after 25 ns;
+				CONin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				PCout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				Cout_tb <= '1', '0' after 25 ns;   
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN T6 =>
+			WHEN T6b =>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN T7 =>
+				PCout_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN Tresult => 
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN OTHERS =>
+			END CASE;
+			
+	when brmi_yes => -- address 130
+		CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
+				
+			
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1', '0' after 25 ns;
+				CONin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				PCout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				Cout_tb <= '1', '0' after 25 ns;   
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN T6 =>
+			WHEN T6b =>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN T7 =>
+				PCout_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+			WHEN Tresult => 
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= con_tb, '0' after 25 ns;
+			WHEN OTHERS =>
+			END CASE;
+			
+	when preloadR1a => -- address 167 read from address 19
+		CASE Present_state IS   --assert the required signalsin each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0'; conIN_tb <= '0';
+				
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns;  
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T3=>
+				Grb_tb <= '1', '0' after 25 ns;
+				BAout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				Cout_tb <= '1', '0' after 25 ns;
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				ZLOout_tb <= '1', '0' after 20 ns;   
+				MARin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T6 =>
+			WHEN T6b =>
+				MDRin_tb <= '1', '0' after 25 ns;
+				readS_tb <= '1', '0' after 25 ns;
+				
+			WHEN T7 =>
+				MDRout_tb <= '1', '0' after 20 ns;
+				Gra_tb <= '1', '0' after 25 ns;
+				Rin_tb <= '1', '0' after 25 ns;
+			
+			WHEN OTHERS =>
+			END CASE;
+			
+	when jr => -- address 168
+		CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0';
+				
+			
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1' after 2 ns, '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;
+			
+			WHEN OTHERS =>
+			END CASE;
+			
+	when preloadR1b => -- address 69 read from address 20
+		CASE Present_state IS   --assert the required signalsin each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
+				
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns;  
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T3=>
+				Grb_tb <= '1', '0' after 25 ns;
+				BAout_tb <= '1', '0' after 25 ns;
+				Yin_tb <= '1', '0' after 25 ns;
+			WHEN T4=>
+				Cout_tb <= '1', '0' after 25 ns;
+				addS_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T5 =>		
+				ZLOout_tb <= '1', '0' after 20 ns;   
+				MARin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T6 =>
+			WHEN T6b =>
+				MDRin_tb <= '1', '0' after 25 ns;
+				readS_tb <= '1', '0' after 25 ns;
+				
+			WHEN T7 =>
+				MDRout_tb <= '1', '0' after 20 ns;
+				Gra_tb <= '1', '0' after 25 ns;
+				Rin_tb <= '1', '0' after 25 ns;
+			
+			WHEN OTHERS =>
+			END CASE;
+			
+	when jal => -- address 70
+		CASE Present_state IS   --assert the required signals in each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0';  Rout_tb <= '0'; writeS_tb <= '0';
+				
+			
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;  
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns; 
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1' after 2 ns, '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;
+			
+			WHEN OTHERS =>
+			END CASE;
+	
+	when mfhi => --address 421
+		CASE Present_state IS   --assert the required signalsin each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
+				
+			WHEN PC_load1a=>
+				INPORTval_tb <= x"00ABCABC";
+				readS_tb <= '0', '1' after 10 ns, '0' after 25 ns; --the first zero is there for completeness
+				INPORTin_tb <= '0', '1' after 10 ns, '0' after 25 ns;
+			WHEN PC_load1b=> 
+				HIin_tb <= '1', '0' after 25 ns;
+				INPORTout_tb <= '1', '0' after 25 ns;
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns;  
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				HIout_tb <= '1', '0' after 25 ns;
+				Rin_tb <= '1', '0' after 25 ns;
+		
+				
+			WHEN OTHERS =>
+			END CASE;
+			
+	when mflo => --address 421
+		CASE Present_state IS   --assert the required signalsin each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
+				
+			WHEN PC_load1a=>
+				INPORTval_tb <= x"00DEFDEF";
+				readS_tb <= '0', '1' after 10 ns, '0' after 25 ns; --the first zero is there for completeness
+				INPORTin_tb <= '0', '1' after 10 ns, '0' after 25 ns;
+			WHEN PC_load1b=> 
+				LOin_tb <= '1', '0' after 25 ns;
+				INPORTout_tb <= '1', '0' after 25 ns;
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns;  
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				LOout_tb <= '1', '0' after 25 ns;
+				Rin_tb <= '1', '0' after 25 ns;
+			WHEN OTHERS =>
+			END CASE;
+			
+	when IOin => --address 422
+		CASE Present_state IS   --assert the required signalsin each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
+				
+			WHEN PC_load1a=>
+				INPORTval_tb <= x"88888888";
+				readS_tb <= '0', '1' after 10 ns, '0' after 25 ns; --the first zero is there for completeness
+				INPORTin_tb <= '0', '1' after 10 ns, '0' after 25 ns;
+			
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns;  
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rin_tb <= '1', '0' after 25 ns;
+				INPORTout_tb <= '1', '0' after 25 ns;
+			
+				
+			WHEN OTHERS =>
+			END CASE;
+			
+	when IOout => --address 423
+		CASE Present_state IS   --assert the required signalsin each clock cycle
+
+			WHEN Default=>	
+				PCout_tb <= '0'; LOout_tb <= '0'; HIout_tb <= '0'; INPORTout_tb <= '0'; MDRout_tb <= '0'; Cout_tb <= '0'; HIin_tb <= '0'; LOin_tb <= '0'; 
+				ZLOout_tb <= '0';ZHIout_tb <= '0'; Coutin_tb <= '0'; INPORTin_tb  <= '0'; OUTPORTin_tb <= '0'; MARin_tb  <= '0'; Zin_tb  <= '0'; 
+				PCin_tb  <= '0'; MDRin_tb  <= '0'; IRin_tb  <= '0'; Yin_tb  <= '0'; 
+				IncPC_tb <= '0'; readS_tb  <= '0'; andS_tb  <= '0'; orS_tb  <= '0'; addS_tb  <= '0'; subS_tb  <= '0'; mulS_tb  <= '0'; divS_tb  <= '0'; 
+				shrS_tb  <= '0'; shlS_tb  <= '0'; rorS_tb  <= '0'; rolS_tb  <= '0'; negS_tb  <= '0'; notS_tb  <= '0';	reset_tb <= '0';
+				Gra_tb <= '0'; Grb_tb <= '0'; Grc_tb <= '0'; BAout_tb <= '0'; Rin_tb <= '0'; Rout_tb <= '0'; writeS_tb <= '0';
+			
+				
+			WHEN T0 => --see if you need to de-assert these signals
+				PCout_tb <= '1', '0' after 25 ns;
+				MARin_tb <= '1', '0' after 25 ns;
+				IncPC_tb <= '1', '0' after 25 ns;
+				Zin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T1=>
+				ZLOout_tb <= '1', '0' after 25 ns;
+				PCin_tb <= '1', '0' after 25 ns;   
+				readS_tb <= '1', '0' after 25 ns;    
+				
+			WHEN T2 =>
+				readS_tb <= '1', '0' after 25 ns;  
+				MDRin_tb <= '1', '0' after 25 ns;
+			WHEN T2b=>
+				MDRout_tb <= '1', '0' after 25 ns;   
+				IRin_tb <= '1', '0' after 25 ns;
+				
+			WHEN T3=>
+				Gra_tb <= '1', '0' after 25 ns;
+				Rout_tb <= '1', '0' after 25 ns;
+				OUTPORTin_tb <= '1', '0' after 25 ns;
+			
+				
 			WHEN OTHERS =>
 			END CASE;
 	when others =>
