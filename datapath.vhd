@@ -11,7 +11,7 @@ port(
 	
 
 	con : out std_logic;
-	conIN : in std_logic;
+	--conIN : in std_logic;
 	
 --	Z : out std_logic_vector(63 downto 0);
 
@@ -20,13 +20,13 @@ port(
 	--R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : in std_logic;
 	--R0out, R1out, R2out, R3out, R4out, R5out, R6out, R7out, R8out, R9out, R10out, R11out, R12out, R13out, R14out, R15out : in std_logic;
 	
-	Zin, HIin, LOin, PCin, Coutin, INPORTin, OUTPORTin, IRin, MDRin, MARin, Yin : in std_logic;
-	PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : in std_logic;
+	--Zin, HIin, LOin, PCin, Coutin, INPORTin, OUTPORTin, IRin, MDRin, MARin, Yin : in std_logic;
+	--PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : in std_logic;
 
-	readS, writeS, andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : in std_logic;
+	--readS, writeS, andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : in std_logic;
 	
-	busGra, busGrb, busGrc, busRin, busRout, busBAout : in std_logic;
-	IncPC : in std_logic;
+	--busGra, busGrb, busGrc, busRin, busRout, busBAout : in std_logic;
+	--IncPC : in std_logic;
 	Clock, reset : in std_logic
 	--Mdatain : in std_logic_vector (31 downto 0)
 	);
@@ -109,6 +109,19 @@ component conFF is
 	);
 end component conFF;
 
+component control_unit is
+	port(
+	clk, reset, stop, conFF : in std_logic;
+	readS, writeS : out std_logic;
+	
+	IR : in std_logic_vector(31 downto 0);
+	HIin, LOin, CONin, PCin, IRin, Yin, Zin, MARin, MDRin, OutPortin, Cout, BAout : out std_logic;
+	Gra, Grb, Grc, Rin, Rout : out std_logic;
+	PCout, HIout, LOout, MDRout, ZHIout, ZLOout : out std_logic;
+	andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : out std_logic;
+	IncPC : out std_logic
+	);
+end component control_unit;
 
 component reg32 is
 	port(
@@ -149,11 +162,11 @@ signal ALU_out : std_logic_vector(63 downto 0);
 signal INPORTval, OUTPORTval : std_logic_vector(31 downto 0);
 
 signal R0in, R1in, R2in, R3in, R4in, R5in, R6in, R7in, R8in, R9in, R10in, R11in, R12in, R13in, R14in, R15in : std_logic;
---signal ZHIin, ZLOin, HIin, LOin, PCin, Coutin, INPORTin, IRin : std_logic;
+signal ZHIin, ZLOin, Zin, HIin, LOin, PCin, IncPC, Coutin, INPORTin, OUTPORTin, IRin, conIN, conFFsignal : std_logic;
 
---signal Yin, MARin, MDRin, readS  : std_logic;
---ALU control signals for desired operations
---signal andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : std_logic;
+signal Yin, MARin, MDRin, readS, writeS  : std_logic;
+signal PCout, ZLOout, ZHIout, LOout, HIout, INPORTout, MDRout, Cout : std_logic;
+signal andS, orS, addS, subS, mulS, divS, shrS, shlS, rorS, rolS, negS, notS : std_logic;
 --signal ZdataIn : std_logic_vector(63 downto 0);
 
 
@@ -294,12 +307,12 @@ port map(
 
 selectAndEnocde : selEncode
 port map(
-	Gra => busGra, 
-	Grb => busGrb, 
-	Grc => busGrc, 
-	Rin => busRin, 
-	Rout => busRout, 
-	BAout => busBAout,
+	Gra => Gra, 
+	Grb => Grb, 
+	Grc => Grc, 
+	Rin => Rin, 
+	Rout => Rout, 
+	BAout => BAout,
 	IRin => IRctl,
 	
 	R0in => R0in,
@@ -344,9 +357,58 @@ port map(
 		IRout => IRctl,
 		BusMuxOut  => BusMuxOut,
 		conIN => conIN,
-		control => con
+		control => conFFsignal
 	);
 	
+
+controlUnit : control_unit
+port map(
+	clk => Clock, 
+	reset => '0', 
+	stop => '0', 
+	conFF => conFFsignal,
+	readS => readS, 
+	writeS => writeS,
+	
+	IR => IRctl,
+	HIin => HIin, 
+	LOin => LOin, 
+	CONin => CONin, 
+	PCin => PCin, 
+	IRin => IRin, 
+	Yin => Yin, 
+	Zin => Zin, 
+	MARin => MARin, 
+	MDRin => MDRin, 
+	OUTPORTin => OUTPORTin, 
+	Cout => Cout, 
+	BAout => BAout,
+	Gra => Gra, 
+	Grb => Grb, 
+	Grc => Grc, 
+	Rin => Rin, 
+	Rout => Rout,
+	
+	PCout => PCout, 
+	HIout => HIout, 
+	LOout => LOout, 
+	MDRout => MDRout, 
+	ZHIout => ZHIout, 
+	ZLOout => ZLOout,
+	andS => andS, 
+	orS => orS, 
+	addS => addS, 
+	subS => subS, 
+	mulS => mulS, 
+	divS => divS, 
+	shrS => shrS, 
+	shlS => shlS, 
+	rorS => rorS, 
+	rolS => rolS, 
+	negS => negS, 
+	notS => notS,
+	IncPC => IncPC
+	);
 --define registers
 
 
@@ -354,7 +416,7 @@ register0 : reg0
 port map(
 	d => BusMuxOut,
 	q => busMuxR0in,
-	BAout => busBAout,
+	BAout => BAout,
 	clear => reset, 
 	clock => Clock, 
 	enable => R0in
