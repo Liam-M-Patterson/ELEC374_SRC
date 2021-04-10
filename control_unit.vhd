@@ -17,9 +17,9 @@ port(
 end entity;
 
 architecture behaviour of control_unit is
-	type state is (reset_state, fetch0, fetch1, fetch2, fetch2b, load3, load4, load5, load6, load6b, load7, loadi3, loadi4, loadi5, store3, store4, store5, store6, store6b, store7, add3, add4, add5,
+	type state is (reset_state, fetch0, fetch1, fetch2, fetch2b, fetch2c, load3, load4, load5, load6, load6b, load7, loadi3, loadi4, loadi5, store3, store4, store5, store6, store6b, store7, add3, add4, add5,
 	addi3, addi4, addi5, or3, or4, or5, ori3, ori4, ori5, and3, and4, and5, andi3, andi4, andi5, neg3, neg4, neg5, not3, not4, not5, shr3, shr4, shr5, shl3, shl4, shl5, ror3, ror4, ror5, rol3, rol4, rol5,
-	sub3, sub4, sub5, div3, div4, div5, mul3, mul4, mul5, jump3, mfhi3, mflo3, branch3, branch4, branch5, branch6, branch6b, branch7, branchResult, nop3, halt3);
+	sub3, sub4, sub5, div3, div4, div5, div6, mul3, mul4, mul5, mul6, jr3, jal3, jal4, mfhi3, mflo3, branch3, branch4, branch5, branch6, branch6b, nop3, halt3);
 	
 	signal present_state : state := reset_state;
 	
@@ -40,6 +40,8 @@ architecture behaviour of control_unit is
 				when fetch2 => 
 					present_state <= fetch2b;
 				when fetch2b =>
+					present_state <= fetch2c;
+				when fetch2c =>
 					case IR(31 downto 27) is
 						when "00000" =>
 							present_state <= load3;
@@ -80,13 +82,9 @@ architecture behaviour of control_unit is
 						when "10010" =>
 							present_state <= branch3;
 						when "10011" =>
-							present_state <= jump3;
+							present_state <= jr3;
 						when "10100" =>
-							present_state <= jump3;
-						--when "10101" =>
-							--present_state <= in3;
-						--when "10110" =>
-							--present_state <= out3;
+							present_state <= jal3;
 						when "10111" =>
 							present_state <= mfhi3;
 						when "11000" =>
@@ -110,7 +108,7 @@ architecture behaviour of control_unit is
 					present_state <= load7;					
 				when load7 =>
 					present_state <= reset_state;
-					
+				
 				when loadi3 =>
 					present_state <= loadi4;
 				when loadi4 =>
@@ -180,6 +178,13 @@ architecture behaviour of control_unit is
 				when neg5 =>
 					present_state <= reset_state;
 				
+				when not3 =>
+					present_state <= not4;
+				when not4 =>
+					present_state <= not5;
+				when not5 =>
+					present_state <= reset_state;
+					
 				when ror3 =>
 					present_state <= ror4;
 				when ror4 =>
@@ -220,6 +225,8 @@ architecture behaviour of control_unit is
 				when div4 =>
 					present_state <= div5;
 				when div5 =>
+					present_state <= div6;
+				when div6 =>
 					present_state <= reset_state;
 					
 				when mul3 =>
@@ -227,10 +234,19 @@ architecture behaviour of control_unit is
 				when mul4 =>
 					present_state <= mul5;
 				when mul5 =>
+					present_state <= mul6;
+				when mul6 =>
 					present_state <= reset_state;
 				
-				when jump3 =>
+				when jr3 =>
 					present_state <= reset_state;
+				when jal3 =>
+					present_state <= jal4;
+				when jal4 =>
+					present_state <= reset_state;
+					
+				when nop3 => present_state <= reset_state;
+				
 					
 				when mfhi3 =>
 					present_state <= reset_state;
@@ -247,11 +263,9 @@ architecture behaviour of control_unit is
 				when branch6 =>
 					present_state <= branch6b;
 				when branch6b =>
-					present_state <= branch7;
-				when branch7 =>
-					present_state <= branchResult;
-				when branchResult =>
 					present_state <= reset_state;
+			
+			
 				when others =>
 				
 			end case;
@@ -301,9 +315,9 @@ architecture behaviour of control_unit is
 				MDRin <= '1', '0' after 25 ns;
 				readS <= '1', '0' after 25 ns;
 			when load7 =>
-				MDRout <= '1', '0' after 20 ns;
+				MDRout <= '1', '0' after 25 ns;
 				Gra <= '1', '0' after 25 ns;
-				Rin <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;				
 				
 			when loadi3 =>
 				Grb <= '1', '0' after 25 ns;
@@ -351,6 +365,34 @@ architecture behaviour of control_unit is
 				ZLOout <= '1', '0' after 25 ns;
 				Rin <= '1', '0' after 25 ns;
 				Gra <= '1', '0' after 25 ns;
+				
+			when add3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when add4 =>
+				Grc <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				adds <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when add5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+			
+			when sub3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when sub4 =>
+				Grc <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				subs <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when sub5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
 			
 			when andi3 =>
 				Grb <= '1', '0' after 25 ns;
@@ -361,6 +403,20 @@ architecture behaviour of control_unit is
 				ands <= '1', '0' after 25 ns;
 				Zin <= '1', '0' after 25 ns;
 			when andi5 => 
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+			
+			when and3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when and4 =>
+				Grc <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				ands <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when and5 =>
 				ZLOout <= '1', '0' after 25 ns;
 				Rin <= '1', '0' after 25 ns;
 				Gra <= '1', '0' after 25 ns;
@@ -378,6 +434,134 @@ architecture behaviour of control_unit is
 				Rin <= '1', '0' after 25 ns;
 				Gra <= '1', '0' after 25 ns;
 				
+			when or3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when or4 =>
+				Grc <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				ors <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when or5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+				
+			when neg3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when neg4 =>
+				Cout <= '1', '0' after 25 ns;
+				negS <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when neg5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+				
+			when not3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when not4 =>
+				Cout <= '1', '0' after 25 ns;
+				notS <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when not5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+				
+			when shr3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when shr4 =>
+				Grc <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				shrS <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when shr5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+			
+			when shl3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when shl4 =>
+				Grc <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				shlS <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when shl5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+			
+			when ror3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when ror4 =>
+				Grc <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				rorS <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when ror5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+			
+			when rol3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when rol4 =>
+				Grc <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				rolS <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when rol5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+				
+			when mul3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when mul4 =>
+				Gra <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				mulS <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when mul5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				LOin <= '1', '0' after 25 ns;
+			when mul6 => 
+				ZHIout <= '1', '0' after 25 ns;
+				HIin <= '1', '0' after 25 ns;
+			
+			when div3 =>
+				Grb <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				Yin <= '1', '0' after 25 ns;
+			when div4 =>
+				Gra <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				divS <= '1', '0' after 25 ns;
+				Zin <= '1', '0' after 25 ns;
+			when div5 =>
+				ZLOout <= '1', '0' after 25 ns;
+				LOin <= '1', '0' after 25 ns;
+			when div6 => 
+				ZHIout <= '1', '0' after 25 ns;
+				HIin <= '1', '0' after 25 ns;
+			
 			when branch3 =>
 				Gra <= '1', '0' after 25 ns;
 				Rout <= '1', '0' after 25 ns;
@@ -392,19 +576,22 @@ architecture behaviour of control_unit is
 			when branch6b =>
 				ZLOout <= '1', '0' after 25 ns;
 				PCin <= conFF, '0' after 25 ns;
-			when branch7 =>
-				PCout <= '1', '0' after 25 ns;
-				IncPC <= '1', '0' after 25 ns;
-				Zin <= '1', '0' after 25 ns;
-			when branchResult =>
-				ZLOout <= '1', '0' after 25 ns;
-				PCin <= conFF, '0' after 25 ns;
 			
-			when jump3 =>
+			when jr3 =>
 				Gra <= '1', '0' after 25 ns;
 				Rout <= '1' after 2 ns, '0' after 25 ns;
 				PCin <= '1', '0' after 25 ns;
 			
+			when jal3 =>
+				PCout <= '1', '0' after 25 ns;
+				Grb <= '1', '0' after 25 ns;
+				Rin <= '1', '0' after 25 ns;
+		
+			when jal4 =>
+				PCin <= '1', '0' after 25 ns;
+				Gra <= '1', '0' after 25 ns;
+				Rout <= '1', '0' after 25 ns;
+				
 			when mfhi3 =>
 				Gra <= '1', '0' after 25 ns;
 				HIout <= '1', '0' after 25 ns;
